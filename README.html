@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fashion MNIST CNN - In-Class Activity</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        code {
+            background-color: #ecf0f1;
+            color: #e74c3c;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre code {
+            background-color: transparent;
+            color: #ecf0f1;
+            padding: 0;
+        }
+        .activity-box {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .challenge-box {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .bonus-box {
+            background-color: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .badge-easy {
+            background-color: #28a745;
+        }
+        .badge-medium {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .badge-hard {
+            background-color: #dc3545;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Fashion MNIST CNN with PyTorch - In-Class Activity</h1>
+
+        <div class="success">
+            <strong>📚 Learning Objectives:</strong>
+            <ul>
+                <li>Understand CNN architecture and implementation</li>
+                <li>Learn to convert between deep learning frameworks (TensorFlow → PyTorch)</li>
+                <li>Build interactive ML applications with Streamlit</li>
+                <li>Experiment with model architectures and hyperparameters</li>
+            </ul>
+        </div>
+
+        <h2>🧠 Understanding Convolutional Neural Networks (CNNs)</h2>
+
+        <div class="activity-box">
+            <h3>What is a CNN?</h3>
+            <p>A Convolutional Neural Network (CNN) is a type of deep learning model specifically designed for processing grid-like data, such as images. CNNs automatically learn spatial hierarchies of features through multiple layers of processing.</p>
+
+            <h4>Why CNNs for Image Classification?</h4>
+            <ul>
+                <li><strong>Spatial Feature Learning:</strong> CNNs can detect edges, shapes, and complex patterns</li>
+                <li><strong>Parameter Sharing:</strong> Same filter is applied across the image, reducing parameters</li>
+                <li><strong>Translation Invariance:</strong> Can recognize objects regardless of position in image</li>
+                <li><strong>Hierarchical Learning:</strong> Early layers learn simple features, deeper layers learn complex patterns</li>
+            </ul>
+        </div>
+
+        <h3>📐 CNN Architecture Explained</h3>
+
+        <div class="warning">
+            <h4>Our Model Architecture:</h4>
+            <pre style="background-color: #fff; color: #333; border: 1px solid #ddd;">
+    Input Image (28x28x1)
+           ↓
+    ┌─────────────────────────────────────┐
+    │ Conv2D Layer 1 (6 filters, 5x5)    │ → Output: 24x24x6
+    │ - Detects basic edges and lines    │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ ReLU Activation                     │ → Introduces non-linearity
+    │ - f(x) = max(0, x)                 │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ MaxPool2D (2x2)                     │ → Output: 12x12x6
+    │ - Reduces spatial dimensions        │
+    │ - Keeps most prominent features     │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ Conv2D Layer 2 (16 filters, 5x5)   │ → Output: 8x8x16
+    │ - Detects complex patterns          │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ ReLU Activation                     │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ MaxPool2D (2x2)                     │ → Output: 4x4x16
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ Flatten                             │ → Output: 256
+    │ - Converts 3D tensor to 1D vector   │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ Dense Layer 1 (128 neurons)        │
+    │ - Learns high-level representations │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ ReLU + Dropout (0.2)               │
+    │ - Prevents overfitting              │
+    └─────────────────────────────────────┘
+           ↓
+    ┌─────────────────────────────────────┐
+    │ Dense Layer 2 (10 neurons)         │
+    │ - One neuron per class              │
+    └─────────────────────────────────────┘
+           ↓
+    Output (10 class probabilities)
+            </pre>
+        </div>
+
+        <h3>🔍 Key Concepts Explained</h3>
+
+        <div class="grid">
+            <div class="card">
+                <h4>1. Convolution Operation</h4>
+                <p><strong>What it does:</strong> Slides a filter (kernel) over the input image to detect features.</p>
+                <pre style="font-size: 12px;">
+Filter (3x3)     Image Region      Result
+[1  0 -1]       [255 128  64]
+[1  0 -1]   ×   [255 128  64]  =  Edge detected!
+[1  0 -1]       [255 128  64]
+                </pre>
+                <p><strong>Why:</strong> Different filters detect different features (edges, corners, textures)</p>
+            </div>
+
+            <div class="card">
+                <h4>2. Pooling Layers</h4>
+                <p><strong>What it does:</strong> Reduces spatial dimensions while keeping important features.</p>
+                <pre style="font-size: 12px;">
+MaxPool 2x2:
+[1  3]  [2  4]     [3  4]
+[5  7]  [6  8]  →  [7  8]
+                </pre>
+                <p><strong>Why:</strong> Reduces computation, provides translation invariance, prevents overfitting</p>
+            </div>
+
+            <div class="card">
+                <h4>3. ReLU Activation</h4>
+                <p><strong>What it does:</strong> Applies f(x) = max(0, x) to introduce non-linearity.</p>
+                <pre style="font-size: 12px;">
+Input:  [-2, -1, 0, 1, 2]
+Output: [ 0,  0, 0, 1, 2]
+                </pre>
+                <p><strong>Why:</strong> Allows network to learn complex, non-linear patterns</p>
+            </div>
+
+            <div class="card">
+                <h4>4. Dropout</h4>
+                <p><strong>What it does:</strong> Randomly sets neurons to zero during training.</p>
+                <p><strong>Why:</strong> Prevents overfitting by forcing network to learn redundant representations</p>
+            </div>
+        </div>
+
+        <h3>📊 Mathematical Foundation</h3>
+
+        <div class="activity-box">
+            <h4>Convolution Formula:</h4>
+            <pre>
+Output Size = (Input Size - Filter Size + 2×Padding) / Stride + 1
+
+Example for our first layer:
+Output = (28 - 5 + 2×0) / 1 + 1 = 24
+            </pre>
+
+            <h4>Parameter Calculation:</h4>
+            <pre>
+Conv Layer 1: (5×5×1)×6 + 6 = 156 parameters
+Conv Layer 2: (5×5×6)×16 + 16 = 2,416 parameters
+FC Layer 1: 256×128 + 128 = 32,896 parameters
+FC Layer 2: 128×10 + 10 = 1,290 parameters
+Total: 36,758 parameters
+            </pre>
+        </div>
+
+        <h2>🧪 Testing the Application</h2>
+
+        <div class="success">
+            <h3>Where to Get Test Images</h3>
+
+            <h4>Option 1: Use Fashion MNIST Test Set (Built-in)</h4>
+            <p>The app automatically loads 10,000 test images from Fashion MNIST. Click "Generate Random Predictions" to test with these.</p>
+
+            <h4>Option 2: Create Your Own Test Images</h4>
+            <ol>
+                <li><strong>Draw in Paint/GIMP/Photoshop:</strong>
+                    <ul>
+                        <li>Create a 28×28 pixel image</li>
+                        <li>Use grayscale (black background, white drawing)</li>
+                        <li>Save as PNG or JPG</li>
+                    </ul>
+                </li>
+                <li><strong>Use Online Tools:</strong>
+                    <ul>
+                        <li><a href="https://www.pixilart.com/draw">Pixilart</a> - Set canvas to 28×28</li>
+                        <li><a href="https://www.piskelapp.com/">Piskel</a> - Pixel art editor</li>
+                        <li><a href="https://quickdraw.withgoogle.com/">Google Quick Draw</a> - Draw and screenshot</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Option 3: Download Sample Images</h4>
+            <pre><code># Python script to save test images
+import matplotlib.pyplot as plt
+from torchvision import datasets
+
+# Load dataset
+data = datasets.FashionMNIST('./data', train=False, download=True)
+
+# Save first 10 images
+for i in range(10):
+    img, label = data[i]
+    plt.imsave(f'test_image_{i}_{label}.png', img, cmap='gray')
+    print(f'Saved: test_image_{i}_{label}.png')</code></pre>
+
+            <h4>Option 4: Photograph Real Items</h4>
+            <ol>
+                <li>Take a photo of clothing/shoes/bags</li>
+                <li>Convert to grayscale</li>
+                <li>Resize to 28×28 pixels</li>
+                <li>Adjust contrast (dark background, light object)</li>
+            </ol>
+        </div>
+
+        <h3>🎯 Testing Strategy</h3>
+
+        <div class="challenge-box">
+            <h4>Systematic Testing Approach:</h4>
+
+            <table>
+                <tr>
+                    <th>Test Type</th>
+                    <th>What to Test</th>
+                    <th>Expected Behavior</th>
+                </tr>
+                <tr>
+                    <td>Model Training</td>
+                    <td>
+                        <ul>
+                            <li>Different epochs (1, 5, 10)</li>
+                            <li>Different batch sizes (32, 64, 128)</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>Loss should decrease</li>
+                            <li>Accuracy should increase</li>
+                            <li>No crashes or memory errors</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Predictions</td>
+                    <td>
+                        <ul>
+                            <li>Clear images of each class</li>
+                            <li>Ambiguous/blurry images</li>
+                            <li>Incorrectly sized images</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>High confidence on clear images</li>
+                            <li>Lower confidence on ambiguous</li>
+                            <li>Automatic resizing to 28×28</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Edge Cases</td>
+                    <td>
+                        <ul>
+                            <li>All black image</li>
+                            <li>All white image</li>
+                            <li>Random noise</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>Low confidence predictions</li>
+                            <li>No crashes</li>
+                            <li>Distributed probabilities</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Model Save/Load</td>
+                    <td>
+                        <ul>
+                            <li>Save after training</li>
+                            <li>Load in new session</li>
+                            <li>Download model file</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>File saved successfully</li>
+                            <li>Same predictions after loading</li>
+                            <li>Valid .pth file downloaded</li>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3>🐛 Debugging Tips</h3>
+
+        <div class="warning">
+            <h4>Common Issues When Testing:</h4>
+            <ul>
+                <li><strong>Image wrong size:</strong> App auto-resizes, but check if aspect ratio affects results</li>
+                <li><strong>Poor predictions:</strong> Ensure image has dark background and light object (like training data)</li>
+                <li><strong>Model not learning:</strong> Check learning rate, might be too high/low</li>
+                <li><strong>Memory errors:</strong> Reduce batch size or close other applications</li>
+            </ul>
+
+            <h4>Testing Checklist:</h4>
+            <input type="checkbox"> Test with at least 3 images from each class<br>
+            <input type="checkbox"> Verify model improves with more epochs<br>
+            <input type="checkbox"> Test save and load functionality<br>
+            <input type="checkbox"> Try edge cases (blank, noisy images)<br>
+            <input type="checkbox"> Compare PyTorch vs TensorFlow performance<br>
+        </div>
+
+        <h2>📁 Project Structure</h2>
+        <pre><code>AIT-204-CNN/
+├── CNN.ipynb                  # Original TensorFlow notebook
+├── CNN_PyTorch.ipynb          # PyTorch version
+├── fashion_mnist_app.py       # Streamlit application
+├── requirements.txt           # Python dependencies
+└── README.html               # This file</code></pre>
+
+        <h2>🔧 Setup Instructions</h2>
+
+        <h3>Step 1: Install Dependencies</h3>
+        <div class="warning">
+            <strong>⚠️ Note:</strong> Make sure you have Python 3.8 or higher installed
+        </div>
+
+        <pre><code># Create a virtual environment (recommended)
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install required packages
+pip install -r requirements.txt</code></pre>
+
+        <h3>Step 2: Run the Streamlit App</h3>
+        <pre><code># Launch the application
+streamlit run fashion_mnist_app.py
+
+# The app will open in your browser at http://localhost:8501</code></pre>
+
+        <h2>📱 App Features Overview</h2>
+
+        <div class="grid">
+            <div class="card">
+                <h4>🎯 Model Training</h4>
+                <ul>
+                    <li>Configurable batch size and epochs</li>
+                    <li>Real-time training progress</li>
+                    <li>Live metrics display</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>📊 Visualization</h4>
+                <ul>
+                    <li>Training/test loss plots</li>
+                    <li>Accuracy curves</li>
+                    <li>Random prediction display</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>💾 Model Management</h4>
+                <ul>
+                    <li>Save trained models</li>
+                    <li>Load pre-trained models</li>
+                    <li>Download model files</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>🖼️ Custom Testing</h4>
+                <ul>
+                    <li>Upload custom images</li>
+                    <li>Get predictions with confidence</li>
+                    <li>View all class probabilities</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>👨‍🎓 In-Class Activity: Expand the App</h2>
+
+        <div class="activity-box">
+            <h3>Part 1: Basic Enhancements <span class="badge badge-easy">Easy</span></h3>
+            <p>Complete at least <strong>3</strong> of the following tasks:</p>
+
+            <table>
+                <tr>
+                    <th>Task</th>
+                    <th>Description</th>
+                    <th>Points</th>
+                </tr>
+                <tr>
+                    <td>1. Learning Rate Control</td>
+                    <td>Add a slider in the sidebar to control the learning rate (0.0001 to 0.01)</td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td>2. Optimizer Selection</td>
+                    <td>Add a dropdown to choose between Adam, SGD, and RMSprop optimizers</td>
+                    <td>15</td>
+                </tr>
+                <tr>
+                    <td>3. Data Augmentation</td>
+                    <td>Add random rotation and horizontal flip to training data</td>
+                    <td>15</td>
+                </tr>
+                <tr>
+                    <td>4. Confusion Matrix</td>
+                    <td>Display a confusion matrix after training</td>
+                    <td>20</td>
+                </tr>
+                <tr>
+                    <td>5. Model Metrics</td>
+                    <td>Add precision, recall, and F1-score for each class</td>
+                    <td>15</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="challenge-box">
+            <h3>Part 2: Advanced Features <span class="badge badge-medium">Medium</span></h3>
+            <p>Choose <strong>2</strong> of the following challenges:</p>
+
+            <h4>Challenge A: Architecture Exploration</h4>
+            <p>Add a sidebar section to configure the CNN architecture:</p>
+            <pre><code># Example implementation starter
+def build_custom_cnn(conv_layers, fc_layers, dropout_rate):
+    model = nn.Sequential()
+    # Build model based on user configuration
+    return model
+
+# In sidebar:
+st.sidebar.header("Model Architecture")
+num_conv_layers = st.sidebar.slider("Conv Layers", 1, 4, 2)
+num_fc_layers = st.sidebar.slider("FC Layers", 1, 3, 2)
+dropout = st.sidebar.slider("Dropout Rate", 0.0, 0.5, 0.2)</code></pre>
+
+            <h4>Challenge B: Real-time Drawing</h4>
+            <p>Add a canvas for users to draw their own fashion items:</p>
+            <pre><code># Install: pip install streamlit-drawable-canvas
+from streamlit_drawable_canvas import st_canvas
+
+# Create drawing canvas
+canvas_result = st_canvas(
+    fill_color="rgba(255, 165, 0, 0.3)",
+    stroke_width=5,
+    stroke_color="#000000",
+    background_color="#FFFFFF",
+    height=280,
+    width=280,
+    drawing_mode="freedraw",
+    key="canvas",
+)</code></pre>
+
+            <h4>Challenge C: Model Comparison</h4>
+            <p>Train multiple models and compare their performance:</p>
+            <ul>
+                <li>Allow training of 2-3 different architectures</li>
+                <li>Display side-by-side performance metrics</li>
+                <li>Show comparison plots</li>
+                <li>Save best performing model</li>
+            </ul>
+
+            <h4>Challenge D: Transfer Learning</h4>
+            <p>Implement transfer learning using a pre-trained model:</p>
+            <ul>
+                <li>Use a pre-trained ResNet or MobileNet</li>
+                <li>Modify final layers for Fashion MNIST</li>
+                <li>Compare with the custom CNN</li>
+            </ul>
+        </div>
+
+        <div class="bonus-box">
+            <h3>Part 3: Bonus Challenges <span class="badge badge-hard">Hard</span></h3>
+
+            <h4>🌟 Bonus 1: Explainable AI (25 points)</h4>
+            <p>Implement Grad-CAM to visualize which parts of the image the model focuses on:</p>
+            <pre><code># Grad-CAM implementation hint
+def generate_gradcam(model, image, target_class):
+    # Hook to capture gradients
+    # Forward pass
+    # Backward pass
+    # Generate heatmap
+    return heatmap</code></pre>
+
+            <h4>🌟 Bonus 2: Model Deployment (25 points)</h4>
+            <p>Create an API endpoint for the model:</p>
+            <ul>
+                <li>Add a FastAPI backend</li>
+                <li>Create prediction endpoint</li>
+                <li>Add batch prediction support</li>
+                <li>Include response caching</li>
+            </ul>
+
+            <h4>🌟 Bonus 3: Advanced Metrics Dashboard (20 points)</h4>
+            <p>Create a comprehensive metrics dashboard:</p>
+            <ul>
+                <li>Per-class accuracy over epochs</li>
+                <li>Learning rate scheduling visualization</li>
+                <li>Weight distribution histograms</li>
+                <li>Gradient flow visualization</li>
+            </ul>
+        </div>
+
+        <h2>📝 Submission Guidelines</h2>
+
+        <div class="activity-box">
+            <h3>What to Submit:</h3>
+            <ol>
+                <li><strong>Modified Code:</strong>
+                    <ul>
+                        <li>Updated <code>fashion_mnist_app.py</code></li>
+                        <li>Any additional Python files created</li>
+                    </ul>
+                </li>
+                <li><strong>Documentation:</strong>
+                    <ul>
+                        <li>Brief report (1-2 pages) explaining your implementations</li>
+                        <li>Screenshots of new features in action</li>
+                        <li>Performance comparisons if applicable</li>
+                    </ul>
+                </li>
+                <li><strong>Reflection:</strong>
+                    <ul>
+                        <li>What challenges did you face?</li>
+                        <li>What did you learn?</li>
+                        <li>Ideas for future improvements</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <h2>🎯 Grading Rubric</h2>
+
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Points</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>Basic Enhancements</td>
+                <td>30</td>
+                <td>Completion of Part 1 tasks</td>
+            </tr>
+            <tr>
+                <td>Advanced Features</td>
+                <td>40</td>
+                <td>Implementation of Part 2 challenges</td>
+            </tr>
+            <tr>
+                <td>Code Quality</td>
+                <td>15</td>
+                <td>Clean, commented, well-structured code</td>
+            </tr>
+            <tr>
+                <td>Documentation</td>
+                <td>10</td>
+                <td>Clear explanations and screenshots</td>
+            </tr>
+            <tr>
+                <td>Creativity</td>
+                <td>5</td>
+                <td>Novel features or improvements</td>
+            </tr>
+            <tr>
+                <td>Bonus</td>
+                <td>+30</td>
+                <td>Optional bonus challenges</td>
+            </tr>
+        </table>
+
+        <h2>💡 Tips and Resources</h2>
+
+        <div class="success">
+            <h4>Helpful Resources:</h4>
+            <ul>
+                <li><a href="https://docs.streamlit.io/">Streamlit Documentation</a></li>
+                <li><a href="https://pytorch.org/tutorials/">PyTorch Tutorials</a></li>
+                <li><a href="https://github.com/zalandoresearch/fashion-mnist">Fashion MNIST Dataset Info</a></li>
+                <li><a href="https://cs231n.github.io/convolutional-networks/">CS231n CNN Guide</a></li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <h4>Common Issues and Solutions:</h4>
+            <ul>
+                <li><strong>CUDA not available:</strong> The app will automatically use CPU if GPU is not available</li>
+                <li><strong>Memory issues:</strong> Reduce batch size if you encounter out-of-memory errors</li>
+                <li><strong>Slow training:</strong> Consider reducing the number of epochs or model complexity for testing</li>
+                <li><strong>Import errors:</strong> Make sure all packages in requirements.txt are installed</li>
+            </ul>
+        </div>
+
+        <h2>🚀 Getting Started Checklist</h2>
+
+        <div class="activity-box">
+            <input type="checkbox"> Install Python dependencies<br>
+            <input type="checkbox"> Run the base Streamlit app successfully<br>
+            <input type="checkbox"> Train a model for at least 3 epochs<br>
+            <input type="checkbox"> Test the prediction feature<br>
+            <input type="checkbox"> Choose your enhancement tasks<br>
+            <input type="checkbox"> Create a new branch for your changes<br>
+            <input type="checkbox"> Implement your chosen features<br>
+            <input type="checkbox"> Test all new functionality<parameter><br>
+            <input type="checkbox"> Document your changes<br>
+            <input type="checkbox"> Submit your work<br>
+        </div>
+
+        <h2>📊 Example Code Snippets</h2>
+
+        <h3>Adding Learning Rate Scheduler</h3>
+        <pre><code>from torch.optim.lr_scheduler import StepLR
+
+# In training function
+scheduler = StepLR(optimizer, step_size=3, gamma=0.1)
+
+for epoch in range(epochs):
+    # Training code...
+    scheduler.step()
+    current_lr = scheduler.get_last_lr()[0]
+    st.write(f"Current learning rate: {current_lr:.6f}")</code></pre>
+
+        <h3>Adding Confusion Matrix</h3>
+        <pre><code>from sklearn.metrics import confusion_matrix
+import seaborn as sns
+
+def plot_confusion_matrix(model, test_loader, device):
+    all_preds = []
+    all_labels = []
+
+    model.eval()
+    with torch.no_grad():
+        for data, target in test_loader:
+            data = data.to(device)
+            output = model(data)
+            pred = output.argmax(dim=1)
+            all_preds.extend(pred.cpu().numpy())
+            all_labels.extend(target.numpy())
+
+    cm = confusion_matrix(all_labels, all_preds)
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Actual')
+    ax.set_title('Confusion Matrix')
+
+    return fig</code></pre>
+
+        <h3>Adding Data Augmentation</h3>
+        <pre><code>from torchvision import transforms
+
+# Enhanced transform with augmentation
+train_transform = transforms.Compose([
+    transforms.RandomRotation(10),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.ToTensor(),
+    transforms.Normalize((0.5,), (0.5,))
+])
+
+# Apply to training dataset only
+train_dataset = datasets.FashionMNIST(
+    root='./data',
+    train=True,
+    download=True,
+    transform=train_transform
+)</code></pre>
+
+        <div class="success">
+            <h3>🎉 Good Luck!</h3>
+            <p>Remember: The goal is to learn and experiment. Don't hesitate to try creative solutions and push beyond the requirements. Happy coding!</p>
+        </div>
+
+        <hr style="margin-top: 40px; border: 1px solid #e0e0e0;">
+        <p style="text-align: center; color: #666; font-size: 14px;">
+            Created for AIT-204 | Last Updated: <script>document.write(new Date().toLocaleDateString());</script>
+        </p>
+    </div>
+</body>
+</html>
