@@ -449,6 +449,135 @@ for i in range(10):
             <input type="checkbox"> Compare PyTorch vs TensorFlow performance<br>
         </div>
 
+        <h2>🎯 Using the New Features</h2>
+
+        <div class="activity-box">
+            <h3>1. GPU/CPU Device Selection</h3>
+            <p>The application now supports manual device selection for training:</p>
+            <ul>
+                <li><strong>Automatic GPU Detection:</strong> Detects CUDA (NVIDIA) or MPS (Apple Silicon) GPUs</li>
+                <li><strong>Apple Silicon Support:</strong> Full support for M1, M2, M3 Macs using Metal Performance Shaders (MPS)</li>
+                <li><strong>NVIDIA GPU Support:</strong> CUDA support for NVIDIA graphics cards on Windows/Linux</li>
+                <li><strong>Manual Selection:</strong> Choose between GPU or CPU training via sidebar radio buttons</li>
+                <li><strong>Performance Comparison:</strong> Train models on both devices to compare training times</li>
+                <li><strong>Device Info:</strong> View GPU type and specifications when available</li>
+            </ul>
+
+            <div class="success">
+                <strong>💡 Apple Silicon Users (M1/M2/M3 Macs):</strong> Your Mac's GPU will be automatically detected as "Apple Silicon (MPS)".
+                Select "GPU (MPS)" for 5-10x faster training compared to CPU!
+            </div>
+
+            <div class="warning">
+                <strong>💡 NVIDIA GPU Users:</strong> GPU training is typically 10-50x faster than CPU for deep learning workloads.
+                If you have a CUDA-compatible GPU, select "GPU (CUDA)" for significantly faster training.
+            </div>
+        </div>
+
+        <div class="activity-box">
+            <h3>2. Confusion Matrix Analysis</h3>
+            <p>After training your model, click "Generate Confusion Matrix" to visualize classification performance:</p>
+
+            <h4>How to Read the Confusion Matrix:</h4>
+            <ul>
+                <li><strong>Rows:</strong> True labels (actual class of the item)</li>
+                <li><strong>Columns:</strong> Predicted labels (what the model predicted)</li>
+                <li><strong>Diagonal Elements:</strong> Correct predictions (darker blue = more correct predictions)</li>
+                <li><strong>Off-Diagonal Elements:</strong> Misclassifications (shows common confusion patterns)</li>
+            </ul>
+
+            <h4>What to Look For:</h4>
+            <ul>
+                <li>Strong diagonal indicates good overall performance</li>
+                <li>High off-diagonal values show which classes are commonly confused</li>
+                <li>Example: If "Shirt" is often predicted as "T-shirt", you'll see high values in that cell</li>
+            </ul>
+        </div>
+
+        <div class="activity-box">
+            <h3>3. Detailed Classification Metrics</h3>
+            <p>Click "Calculate Classification Metrics" to view comprehensive performance analysis:</p>
+
+            <h4>Understanding the Metrics:</h4>
+
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Formula</th>
+                    <th>What It Measures</th>
+                    <th>When to Use</th>
+                </tr>
+                <tr>
+                    <td><strong>Precision</strong></td>
+                    <td>TP / (TP + FP)</td>
+                    <td>Of all predicted positives, how many were correct?</td>
+                    <td>Important when false positives are costly</td>
+                </tr>
+                <tr>
+                    <td><strong>Recall</strong></td>
+                    <td>TP / (TP + FN)</td>
+                    <td>Of all actual positives, how many did we find?</td>
+                    <td>Important when false negatives are costly</td>
+                </tr>
+                <tr>
+                    <td><strong>F1-Score</strong></td>
+                    <td>2 × (Precision × Recall) / (Precision + Recall)</td>
+                    <td>Harmonic mean of precision and recall</td>
+                    <td>When you need balance between precision and recall</td>
+                </tr>
+                <tr>
+                    <td><strong>Support</strong></td>
+                    <td>Count of samples</td>
+                    <td>Number of actual instances in each class</td>
+                    <td>Understanding class distribution</td>
+                </tr>
+            </table>
+
+            <h4>Macro vs Weighted Averages:</h4>
+            <ul>
+                <li><strong>Macro Average:</strong> Simple average across all classes (treats all classes equally)</li>
+                <li><strong>Weighted Average:</strong> Weighted by number of samples in each class (accounts for class imbalance)</li>
+            </ul>
+
+            <h4>Per-Class Visualizations:</h4>
+            <p>The app displays horizontal bar charts showing:</p>
+            <ul>
+                <li>Precision comparison across all classes</li>
+                <li>Recall comparison across all classes</li>
+                <li>F1-Score comparison across all classes</li>
+                <li>Automatic identification of best and worst performing classes</li>
+            </ul>
+        </div>
+
+        <div class="activity-box">
+            <h3>4. Performance Metrics Tracking</h3>
+            <p>The application now tracks and displays training performance metrics:</p>
+
+            <h4>Metrics Displayed:</h4>
+            <ul>
+                <li><strong>Training Device:</strong> Shows whether model was trained on CPU or GPU</li>
+                <li><strong>Training Duration:</strong> Total time taken to train the model (in seconds)</li>
+                <li><strong>Throughput:</strong> Number of samples processed per second</li>
+            </ul>
+
+            <h4>Comparing CPU vs GPU Performance:</h4>
+            <ol>
+                <li>Train a model with the same hyperparameters on CPU</li>
+                <li>Note the training time and throughput</li>
+                <li>Train the same model configuration on GPU (if available)</li>
+                <li>Compare the metrics to see the speedup</li>
+            </ol>
+
+            <div class="success">
+                <strong>Expected Results:</strong>
+                <ul>
+                    <li>GPU training typically completes in 10-30 seconds for 10 epochs</li>
+                    <li>CPU training typically takes 2-5 minutes for the same configuration</li>
+                    <li>GPU speedup is more pronounced with larger batch sizes</li>
+                </ul>
+            </div>
+        </div>
+
         <h2>📁 Project Structure</h2>
         <pre><code>AIT-204-CNN/
 ├── CNN.ipynb                  # Original TensorFlow notebook
@@ -464,6 +593,21 @@ for i in range(10):
             <strong>⚠️ Note:</strong> Make sure you have Python 3.8 or higher installed
         </div>
 
+        <h4>Required Packages:</h4>
+        <div class="card">
+            <pre style="background-color: #f8f9fa; color: #333; border: 1px solid #ddd;">
+streamlit          # Web application framework
+torch              # PyTorch deep learning
+torchvision        # Computer vision datasets & transforms
+numpy              # Numerical computing
+matplotlib         # Data visualization
+Pillow             # Image processing
+scikit-learn       # Machine learning metrics (NEW)
+seaborn            # Statistical visualization (NEW)
+pandas             # Data manipulation (NEW)
+            </pre>
+        </div>
+
         <pre><code># Create a virtual environment (recommended)
 python -m venv venv
 
@@ -476,11 +620,32 @@ source venv/bin/activate
 # Install required packages
 pip install -r requirements.txt</code></pre>
 
+        <div class="success">
+            <strong>✨ New Dependencies:</strong>
+            <ul>
+                <li><code>scikit-learn</code> - For confusion matrix and classification metrics</li>
+                <li><code>seaborn</code> - For enhanced confusion matrix visualization</li>
+                <li><code>pandas</code> - For displaying metrics in tabular format</li>
+            </ul>
+        </div>
+
         <h3>Step 2: Run the Streamlit App</h3>
         <pre><code># Launch the application
 streamlit run fashion_mnist_app.py
 
 # The app will open in your browser at http://localhost:8501</code></pre>
+
+        <div class="success">
+            <h3>✨ New Features Added!</h3>
+            <p>The following enhancements have been implemented in the application:</p>
+            <ul>
+                <li><strong>Confusion Matrix Visualization:</strong> Interactive confusion matrix showing model predictions vs actual labels</li>
+                <li><strong>Comprehensive Metrics:</strong> Precision, Recall, F1-Score for each class plus macro/weighted averages</li>
+                <li><strong>GPU/CPU Selection:</strong> Manual device selection for training with automatic GPU detection</li>
+                <li><strong>Performance Tracking:</strong> Training time and throughput metrics displayed for chosen device</li>
+                <li><strong>Enhanced Analytics:</strong> Per-class metric visualizations and performance insights</li>
+            </ul>
+        </div>
 
         <h2>📱 App Features Overview</h2>
 
@@ -489,8 +654,10 @@ streamlit run fashion_mnist_app.py
                 <h4>🎯 Model Training</h4>
                 <ul>
                     <li>Configurable batch size and epochs</li>
+                    <li>GPU/CPU device selection</li>
                     <li>Real-time training progress</li>
                     <li>Live metrics display</li>
+                    <li>Training time tracking</li>
                 </ul>
             </div>
             <div class="card">
@@ -498,7 +665,28 @@ streamlit run fashion_mnist_app.py
                 <ul>
                     <li>Training/test loss plots</li>
                     <li>Accuracy curves</li>
+                    <li>Confusion matrix heatmap</li>
+                    <li>Per-class metrics charts</li>
                     <li>Random prediction display</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>📈 Advanced Metrics</h4>
+                <ul>
+                    <li>Confusion matrix analysis</li>
+                    <li>Precision, Recall, F1-Score</li>
+                    <li>Macro and weighted averages</li>
+                    <li>Per-class performance insights</li>
+                    <li>Best/worst class identification</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>⚡ Performance Monitoring</h4>
+                <ul>
+                    <li>Device-specific training time</li>
+                    <li>Throughput calculation</li>
+                    <li>CPU vs GPU comparison</li>
+                    <li>Real-time performance stats</li>
                 </ul>
             </div>
             <div class="card">
@@ -529,32 +717,44 @@ streamlit run fashion_mnist_app.py
                 <tr>
                     <th>Task</th>
                     <th>Description</th>
+                    <th>Status</th>
                     <th>Points</th>
                 </tr>
                 <tr>
                     <td>1. Learning Rate Control</td>
                     <td>Add a slider in the sidebar to control the learning rate (0.0001 to 0.01)</td>
+                    <td><span style="color: #666;">Available</span></td>
                     <td>10</td>
                 </tr>
                 <tr>
                     <td>2. Optimizer Selection</td>
                     <td>Add a dropdown to choose between Adam, SGD, and RMSprop optimizers</td>
+                    <td><span style="color: #666;">Available</span></td>
                     <td>15</td>
                 </tr>
                 <tr>
                     <td>3. Data Augmentation</td>
                     <td>Add random rotation and horizontal flip to training data</td>
+                    <td><span style="color: #666;">Available</span></td>
                     <td>15</td>
                 </tr>
-                <tr>
+                <tr style="background-color: #d4edda;">
                     <td>4. Confusion Matrix</td>
                     <td>Display a confusion matrix after training</td>
+                    <td><strong style="color: #28a745;">✅ Implemented</strong></td>
                     <td>20</td>
                 </tr>
-                <tr>
+                <tr style="background-color: #d4edda;">
                     <td>5. Model Metrics</td>
                     <td>Add precision, recall, and F1-score for each class</td>
+                    <td><strong style="color: #28a745;">✅ Implemented</strong></td>
                     <td>15</td>
+                </tr>
+                <tr style="background-color: #d4edda;">
+                    <td>6. GPU/CPU Selection <span class="badge">NEW</span></td>
+                    <td>Manual device selection with performance tracking</td>
+                    <td><strong style="color: #28a745;">✅ Implemented</strong></td>
+                    <td>20</td>
                 </tr>
             </table>
         </div>
@@ -763,15 +963,37 @@ for epoch in range(epochs):
     current_lr = scheduler.get_last_lr()[0]
     st.write(f"Current learning rate: {current_lr:.6f}")</code></pre>
 
-        <h3>Adding Confusion Matrix</h3>
+        <h3>GPU/CPU Device Selection (✅ Implemented)</h3>
+        <pre><code># Check GPU availability
+gpu_available = torch.cuda.is_available()
+if gpu_available:
+    gpu_name = torch.cuda.get_device_name(0)
+    st.sidebar.success(f"✅ GPU Available: {gpu_name}")
+
+    device_option = st.sidebar.radio(
+        "Select Training Device:",
+        options=["GPU (CUDA)", "CPU"],
+        index=0
+    )
+    device = torch.device('cuda' if device_option == "GPU (CUDA)" else 'cpu')
+else:
+    st.sidebar.warning("⚠️ GPU not available. Using CPU.")
+    device = torch.device('cpu')
+
+st.sidebar.info(f"💻 Active Device: **{device.type.upper()}**")</code></pre>
+
+        <h3>Adding Confusion Matrix (✅ Implemented)</h3>
         <pre><code>from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
-def plot_confusion_matrix(model, test_loader, device):
+def generate_confusion_matrix(model, test_loader, device):
+    class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+    model.eval()
     all_preds = []
     all_labels = []
 
-    model.eval()
     with torch.no_grad():
         for data, target in test_loader:
             data = data.to(device)
@@ -782,13 +1004,67 @@ def plot_confusion_matrix(model, test_loader, device):
 
     cm = confusion_matrix(all_labels, all_preds)
 
-    fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('Actual')
-    ax.set_title('Confusion Matrix')
+    fig, ax = plt.subplots(figsize=(12, 10))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax,
+                xticklabels=class_names, yticklabels=class_names)
+    ax.set_xlabel('Predicted Label')
+    ax.set_ylabel('True Label')
+    ax.set_title('Confusion Matrix - Fashion MNIST')
 
-    return fig</code></pre>
+    return fig, cm</code></pre>
+
+        <h3>Calculating Classification Metrics (✅ Implemented)</h3>
+        <pre><code>from sklearn.metrics import precision_recall_fscore_support
+
+def calculate_metrics(model, test_loader, device):
+    model.eval()
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for data, target in test_loader:
+            data = data.to(device)
+            output = model(data)
+            pred = output.argmax(dim=1)
+            all_preds.extend(pred.cpu().numpy())
+            all_labels.extend(target.numpy())
+
+    # Calculate per-class metrics
+    precision, recall, f1, support = precision_recall_fscore_support(
+        all_labels, all_preds, average=None
+    )
+
+    # Calculate macro and weighted averages
+    precision_macro, recall_macro, f1_macro, _ = precision_recall_fscore_support(
+        all_labels, all_preds, average='macro'
+    )
+
+    return {
+        'precision': precision,
+        'recall': recall,
+        'f1_score': f1,
+        'support': support,
+        'precision_macro': precision_macro,
+        'recall_macro': recall_macro,
+        'f1_macro': f1_macro
+    }</code></pre>
+
+        <h3>Performance Tracking (✅ Implemented)</h3>
+        <pre><code>import time
+
+# Track training time
+start_time = time.time()
+train_model(model, train_loader, test_loader, epochs, device)
+training_time = time.time() - start_time
+
+# Save to session state
+st.session_state['training_time'] = training_time
+st.session_state['training_device'] = device.type.upper()
+
+# Display metrics
+st.metric("Training Device", st.session_state['training_device'])
+st.metric("Training Duration", f"{training_time:.2f}s")
+st.metric("Throughput", f"{60000 / training_time:.0f} samples/s")</code></pre>
 
         <h3>Adding Data Augmentation</h3>
         <pre><code>from torchvision import transforms

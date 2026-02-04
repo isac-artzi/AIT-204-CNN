@@ -25,6 +25,9 @@ import matplotlib.pyplot as plt  # Plotting and visualization
 from PIL import Image  # Image processing library
 import io  # For handling byte streams (model download)
 import time  # For tracking training time
+from sklearn.metrics import confusion_matrix, classification_report, precision_recall_fscore_support  # Metrics
+import seaborn as sns  # Statistical data visualization
+import pandas as pd  # Data manipulation and tabular display
 
 
 class FashionCNN(nn.Module):
@@ -306,6 +309,125 @@ def visualize_predictions(model, test_dataset, device, num_images=10):
     return fig
 
 
+def generate_confusion_matrix(model, test_loader, device):
+    """
+    Generate confusion matrix for model predictions
+
+    This function:
+    1. Collects all predictions and true labels from test set
+    2. Computes confusion matrix
+    3. Creates a heatmap visualization
+
+    Args:
+        model: Trained CNN model
+        test_loader: DataLoader for test data
+        device: Computation device (CPU/GPU)
+
+    Returns:
+        tuple: (matplotlib.figure.Figure, confusion_matrix_array)
+    """
+    class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+    model.eval()
+    all_preds = []
+    all_labels = []
+
+    # Collect predictions and labels
+    with torch.no_grad():
+        for data, target in test_loader:
+            data = data.to(device)
+            output = model(data)
+            pred = output.argmax(dim=1)
+            all_preds.extend(pred.cpu().numpy())
+            all_labels.extend(target.numpy())
+
+    # Compute confusion matrix
+    cm = confusion_matrix(all_labels, all_preds)
+
+    # Create visualization
+    fig, ax = plt.subplots(figsize=(12, 10))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax,
+                xticklabels=class_names, yticklabels=class_names,
+                cbar_kws={'label': 'Count'})
+    ax.set_xlabel('Predicted Label', fontsize=12)
+    ax.set_ylabel('True Label', fontsize=12)
+    ax.set_title('Confusion Matrix - Fashion MNIST Classification', fontsize=14, fontweight='bold')
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+
+    return fig, cm
+
+
+def calculate_metrics(model, test_loader, device):
+    """
+    Calculate detailed classification metrics from confusion matrix
+
+    Computes per-class and overall metrics:
+    - Precision: TP / (TP + FP)
+    - Recall: TP / (TP + FN)
+    - F1-Score: Harmonic mean of precision and recall
+    - Support: Number of true instances per class
+
+    Args:
+        model: Trained CNN model
+        test_loader: DataLoader for test data
+        device: Computation device (CPU/GPU)
+
+    Returns:
+        dict: Metrics including precision, recall, f1-score for each class
+    """
+    class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+    model.eval()
+    all_preds = []
+    all_labels = []
+
+    # Collect predictions and labels
+    with torch.no_grad():
+        for data, target in test_loader:
+            data = data.to(device)
+            output = model(data)
+            pred = output.argmax(dim=1)
+            all_preds.extend(pred.cpu().numpy())
+            all_labels.extend(target.numpy())
+
+    # Calculate metrics
+    precision, recall, f1, support = precision_recall_fscore_support(
+        all_labels, all_preds, average=None
+    )
+
+    # Calculate macro and weighted averages
+    precision_macro, recall_macro, f1_macro, _ = precision_recall_fscore_support(
+        all_labels, all_preds, average='macro'
+    )
+    precision_weighted, recall_weighted, f1_weighted, _ = precision_recall_fscore_support(
+        all_labels, all_preds, average='weighted'
+    )
+
+    # Overall accuracy
+    accuracy = np.sum(np.array(all_preds) == np.array(all_labels)) / len(all_labels)
+
+    metrics = {
+        'class_names': class_names,
+        'precision': precision,
+        'recall': recall,
+        'f1_score': f1,
+        'support': support,
+        'precision_macro': precision_macro,
+        'recall_macro': recall_macro,
+        'f1_macro': f1_macro,
+        'precision_weighted': precision_weighted,
+        'recall_weighted': recall_weighted,
+        'f1_weighted': f1_weighted,
+        'accuracy': accuracy
+    }
+
+    return metrics
+
+
 def main():
     """
     Main Streamlit application function
@@ -357,8 +479,40 @@ def main():
     )
 
     # Device selection (CPU vs GPU)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    st.sidebar.info(f"💻 Using device: {device.type.upper()}")
+    st.sidebar.header("⚡ Device Selection")
+
+    # Check GPU availability (CUDA for NVIDIA, MPS for Apple Silicon)
+    cuda_available = torch.cuda.is_available()
+    mps_available = torch.backends.mps.is_available() if hasattr(torch.backends, 'mps') else False
+
+    if cuda_available:
+        gpu_name = torch.cuda.get_device_name(0)
+        st.sidebar.success(f"✅ GPU Available: {gpu_name} (CUDA)")
+
+        device_option = st.sidebar.radio(
+            "Select Training Device:",
+            options=["GPU (CUDA)", "CPU"],
+            index=0,
+            help="GPU training is significantly faster but requires CUDA-compatible hardware."
+        )
+        device = torch.device('cuda' if device_option == "GPU (CUDA)" else 'cpu')
+
+    elif mps_available:
+        st.sidebar.success(f"✅ GPU Available: Apple Silicon (MPS)")
+
+        device_option = st.sidebar.radio(
+            "Select Training Device:",
+            options=["GPU (MPS)", "CPU"],
+            index=0,
+            help="MPS (Metal Performance Shaders) accelerates training on Apple Silicon Macs."
+        )
+        device = torch.device('mps' if device_option == "GPU (MPS)" else 'cpu')
+
+    else:
+        st.sidebar.warning("⚠️ GPU not available. Using CPU.")
+        device = torch.device('cpu')
+
+    st.sidebar.info(f"💻 Active Device: **{device.type.upper()}**")
 
     # Data Loading Section
     with st.spinner("📊 Loading Fashion MNIST dataset..."):
@@ -424,7 +578,7 @@ def main():
             # Initialize new model instance
             model = FashionCNN().to(device)
 
-            st.info("⏳ Training in progress... This may take a few minutes.")
+            st.info(f"⏳ Training in progress on {device.type.upper()}... This may take a few minutes.")
             start_time = time.time()
 
             # Train model and collect metrics
@@ -433,18 +587,28 @@ def main():
             )
 
             training_time = time.time() - start_time
-            st.success(f"✅ Training completed in {training_time:.2f} seconds!")
 
-            # Save model and metrics to session state for persistence
-            # Session state maintains data across Streamlit reruns
+            # Save model, metrics, and training info to session state
             st.session_state['trained_model'] = model
             st.session_state['train_losses'] = train_losses
             st.session_state['train_accs'] = train_accs
             st.session_state['test_losses'] = test_losses
             st.session_state['test_accs'] = test_accs
+            st.session_state['training_time'] = training_time
+            # Format device name for display
+            device_name = device.type.upper()
+            if device.type == 'mps':
+                device_name = 'GPU (MPS)'
+            elif device.type == 'cuda':
+                device_name = 'GPU (CUDA)'
+            st.session_state['training_device'] = device_name
+
+            # Success message with device and timing info
+            device_display = "GPU (MPS)" if device.type == 'mps' else ("GPU (CUDA)" if device.type == 'cuda' else "CPU")
+            st.success(f"✅ Training completed on **{device_display}** in **{training_time:.2f} seconds**!")
 
             # Display final performance metrics
-            col1_1, col1_2 = st.columns(2)
+            col1_1, col1_2, col1_3 = st.columns(3)
             with col1_1:
                 st.metric(
                     "Final Training Accuracy",
@@ -456,6 +620,12 @@ def main():
                     "Final Test Accuracy",
                     f"{test_accs[-1]:.2f}%",
                     delta=f"+{test_accs[-1] - test_accs[0]:.2f}%"
+                )
+            with col1_3:
+                st.metric(
+                    "Training Time",
+                    f"{training_time:.2f}s",
+                    delta=device_display
                 )
 
     with col2:
@@ -524,6 +694,148 @@ def main():
                     st.info("👍 Good model performance")
                 else:
                     st.warning("💡 Consider tuning hyperparameters")
+
+        # Performance Metrics Section
+        st.header("⚡ Performance Metrics")
+
+        # Display training device and time if available
+        if 'training_device' in st.session_state and 'training_time' in st.session_state:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Training Device", st.session_state['training_device'])
+            with col2:
+                st.metric("Training Duration", f"{st.session_state['training_time']:.2f}s")
+            with col3:
+                if 'test_accs' in st.session_state:
+                    samples_per_sec = 60000 / st.session_state['training_time'] * len(st.session_state['test_accs'])
+                    st.metric("Throughput", f"{samples_per_sec:.0f} samples/s")
+
+        st.markdown("---")
+
+        # Confusion Matrix Section
+        st.header("🎯 Confusion Matrix")
+        st.markdown("""
+        The confusion matrix shows how well the model classifies each category.
+        Diagonal cells (top-left to bottom-right) represent correct predictions.
+        """)
+
+        if st.button("📊 Generate Confusion Matrix", use_container_width=True):
+            with st.spinner("Generating confusion matrix..."):
+                fig, cm = generate_confusion_matrix(
+                    st.session_state['trained_model'],
+                    test_loader,
+                    device
+                )
+                st.pyplot(fig)
+
+                # Display confusion matrix statistics
+                st.subheader("Confusion Matrix Statistics")
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    total_correct = np.trace(cm)
+                    st.metric("Correctly Classified", f"{total_correct:,}")
+
+                with col2:
+                    total_samples = np.sum(cm)
+                    st.metric("Total Samples", f"{total_samples:,}")
+
+                with col3:
+                    accuracy = (total_correct / total_samples) * 100
+                    st.metric("Overall Accuracy", f"{accuracy:.2f}%")
+
+        st.markdown("---")
+
+        # Detailed Classification Metrics Section
+        st.header("📈 Detailed Classification Metrics")
+        st.markdown("""
+        **Precision**: Of all items predicted as a class, how many were correct?
+        **Recall**: Of all actual items in a class, how many were identified?
+        **F1-Score**: Harmonic mean of precision and recall (balance between them)
+        """)
+
+        if st.button("📋 Calculate Classification Metrics", use_container_width=True):
+            with st.spinner("Calculating metrics..."):
+                metrics = calculate_metrics(
+                    st.session_state['trained_model'],
+                    test_loader,
+                    device
+                )
+
+                # Display overall metrics
+                st.subheader("Overall Performance Metrics")
+                col1, col2, col3, col4 = st.columns(4)
+
+                with col1:
+                    st.metric("Overall Accuracy", f"{metrics['accuracy']*100:.2f}%")
+                with col2:
+                    st.metric("Macro Avg Precision", f"{metrics['precision_macro']*100:.2f}%")
+                with col3:
+                    st.metric("Macro Avg Recall", f"{metrics['recall_macro']*100:.2f}%")
+                with col4:
+                    st.metric("Macro Avg F1-Score", f"{metrics['f1_macro']*100:.2f}%")
+
+                # Per-class metrics table
+                st.subheader("Per-Class Performance Metrics")
+
+                # Create a dataframe for better visualization
+                metrics_df = pd.DataFrame({
+                    'Class': metrics['class_names'],
+                    'Precision': [f"{p*100:.2f}%" for p in metrics['precision']],
+                    'Recall': [f"{r*100:.2f}%" for r in metrics['recall']],
+                    'F1-Score': [f"{f*100:.2f}%" for f in metrics['f1_score']],
+                    'Support': metrics['support']
+                })
+
+                st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+
+                # Visualize per-class metrics
+                st.subheader("Per-Class Metrics Visualization")
+
+                fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+                # Precision bar chart
+                axes[0].barh(metrics['class_names'], metrics['precision'], color='#3498db')
+                axes[0].set_xlabel('Precision')
+                axes[0].set_title('Precision by Class')
+                axes[0].set_xlim([0, 1])
+                axes[0].grid(axis='x', alpha=0.3)
+
+                # Recall bar chart
+                axes[1].barh(metrics['class_names'], metrics['recall'], color='#2ecc71')
+                axes[1].set_xlabel('Recall')
+                axes[1].set_title('Recall by Class')
+                axes[1].set_xlim([0, 1])
+                axes[1].grid(axis='x', alpha=0.3)
+
+                # F1-Score bar chart
+                axes[2].barh(metrics['class_names'], metrics['f1_score'], color='#e74c3c')
+                axes[2].set_xlabel('F1-Score')
+                axes[2].set_title('F1-Score by Class')
+                axes[2].set_xlim([0, 1])
+                axes[2].grid(axis='x', alpha=0.3)
+
+                plt.tight_layout()
+                st.pyplot(fig)
+
+                # Best and worst performing classes
+                st.subheader("Performance Insights")
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    best_f1_idx = np.argmax(metrics['f1_score'])
+                    st.success(f"**Best Performing Class:**\n\n"
+                              f"{metrics['class_names'][best_f1_idx]} "
+                              f"(F1: {metrics['f1_score'][best_f1_idx]*100:.2f}%)")
+
+                with col2:
+                    worst_f1_idx = np.argmin(metrics['f1_score'])
+                    st.warning(f"**Needs Improvement:**\n\n"
+                              f"{metrics['class_names'][worst_f1_idx]} "
+                              f"(F1: {metrics['f1_score'][worst_f1_idx]*100:.2f}%)")
+
+        st.markdown("---")
 
         # Model Predictions Section
         st.header("🔍 Model Predictions")
